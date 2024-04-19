@@ -3,11 +3,12 @@ title: "Analyzing the Effects of Climatic Change on Rice Production Yields in As
 author: 
   - Yang Cheng 
   
-thanks: "Code and data are available at: https://github.com/E1cheng/Aisa_Climate_Change.A replication of various aspects in this paper are available at: https://www.socialsciencereproduction.org/reproductions/1807/index?step=0"
+thanks: "Code and data are available at: https://github.com/E1cheng/Aisa_Climate_Change.
+A replication of various aspects in this paper are available at: https://www.socialsciencereproduction.org/reproductions/1807/index?step=0"
 date: today
 date-format: long
 abstract: "In this study, we investigate the repercussions of climatic alterations on rice production yields across Asia's principal agricultural regions over the decade spanning 2011 to 2020. The modeling results indicate the intricate relationship between climatic variables and rice yield fluctuations. The findings underscore significant regional disparities in rice production outcomes, attributable to the differential impacts of climate change. This research contributes to the broader understanding of the challenges and opportunities facing rice production in the context of climatic variability, offering crucial insights for the development of adaptive strategies to ensure food security in the face of environmental change."
-format: html
+format: pdf
 toc: true
 number-sections: true
 bibliography: references.bib
@@ -187,6 +188,8 @@ The purpose of this model is to discover an understanding of the factors affecti
 
 # Results {#sec-result}
 
+This section elucidates the principal findings concerning the interplay between climatic variables and rice yield across Asia's key agricultural zones. It particularly sheds light on how temperature fluctuations, precipitation changes, and carbon dioxide levels are interwoven with the intricacies of rice production. By delving into the effects of these environmental factors, we aim to unravel the complexity of their collective influence on agricultural output, providing a nuanced understanding of how regional climate conditions drive variations in crop yields.
+
 ## Model Visualization
 
 ```{r}
@@ -278,6 +281,8 @@ ggplot(data = median_production_sf) +
 The map reveals a heterogeneous pattern of median production values across Asia. Some areas display positive median production values, suggesting resilience or even growth in rice production, whereas other regions, particularly those represented in lighter shades, may be experiencing reductions. This geographic differentiation in production trends can be attributed to the similar climatic conditions and weather patterns shared by countries within the same region. For example, nations that share monsoonal patterns or similar temperature and precipitation regimes are likely to exhibit comparable agricultural outcomes due to these shared environmental influences.
 
 # Discussion {#sec-discussion}
+
+This research offers a vantage point on agricultural analysis, quantitatively elucidating the influence of climate variability on rice production across Asia. We have not only augmented these traditional methodologies but have also cast new light on the intricate nexus between environmental factors and agricultural productivity. Drawing upon a wealth of climatic data, this paper delves into the quantifiable effects that shifting weather patterns, temperature fluctuations, and atmospheric CO2 levels have on rice yields. We can begin to unravel the complex tapestry of factors shaping the future of food security in the face of global environmental changes.
 
 ##  Findings
 In replicating the work of @citeHasegawa2022, our research confirms the finding: climate change exerts an influence on rice production yields in Asia's principal agricultural regions. While the impact of CO2, as illustrated by @fig-cc, appears relatively minor, this could be attributed to the regional variations in CO2 levels not being markedly pronounced or to the adaptive physiological responses of plants to inorganic substances. Both @fig-pc and @fig-tc underscore the correlation between temperature, precipitation, and production yield. The data visualization in @fig-mg further substantiates these findings, showcasing the density distribution of predicted climate impacts based on these variables.

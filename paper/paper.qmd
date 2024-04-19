@@ -1,0 +1,230 @@
+---
+title: "Analyzing the Effects of Climatic Change on Rice Production Yields in Asia Major Agricultural Regions"
+author: 
+  - Yang Cheng 
+  
+thanks: "Code and data are available at: https://github.com/E1cheng/Climate_Change_Agricultural"
+date: today
+date-format: long
+abstract: "In this study, we investigate the repercussions of climatic alterations on rice production yields across Asia's principal agricultural regions over the decade spanning 2011 to 2020. The modeling results indicate the intricate relationship between climatic variables and rice yield fluctuations. The findings underscore significant regional disparities in rice production outcomes, attributable to the differential impacts of climate change. This research contributes to the broader understanding of the challenges and opportunities facing rice production in the context of climatic variability, offering crucial insights for the development of adaptive strategies to ensure food security in the face of environmental change."
+format: html
+toc: true
+number-sections: true
+bibliography: references.bib
+---
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(arrow)
+library(here)
+library(kableExtra)
+library(knitr)
+library(sf)
+library(maps)
+library(tidybayes)
+library(modelsummary)
+```
+
+# Introduction {#sec-intro}
+
+The advent of climate change, recognized as one of the pivotal environmental challenges of the 21st century, has incited extensive investigation into its pervasive effects on ecosystems, human health, and, critically, global agricultural productivity. Despite the breadth of research, the nuanced impacts of this phenomenon on rice production yields within Asia's major agricultural regions remain insufficiently explored. Rice, being a staple food for a significant portion of the global population, particularly in Asia, stands at the forefront of this inquiry.
+
+This study replicates and extends the groundbreaking research the 2022 article ‘A global dataset for the projected impacts of climate change on four major crops’ [@citeHasegawa2022], which meticulously constructed a comprehensive global dataset by amalgamating scientific databases, journal articles, and institutional website data. Their work, spanning from 1990 to 2020, laid the foundational groundwork for assessing the projected impacts of climate change on the yields of four major crops across various geographic regions, intertwined with local climatic conditions. By consolidating a vast array of previously isolated data points into a unified dataset, their study provides an invaluable resource for understanding the complex dynamics between crop yields and climate change.
+
+In this exploration, our focus is on building upon this dataset to ascertain the direct causal impact of climatic changes on rice yields in Asia within the 2011-2020 timeframe. This is quantified through the variation in production outcomes directly attributable to climatic aberrations. Our analysis uncovers a notable variance in rice production outcomes directly correlatable to the interplay of climatic changes, including alterations in precipitation patterns, temperature variations, and CO2 concentration levels. Through this lens, we aim to provide a granular understanding of how environmental shifts precipitate significant outcomes in agricultural domains, thereby offering insights crucial for developing resilient food systems in the face of ongoing climatic uncertainties.
+
+# Data {#sec-data}
+
+## Source and Methodology
+
+The dataset used in this study originates from the paper by [@citeHasegawa2022], titled "A global dataset for the projected impacts of climate change on four major crops". This comprehensive dataset is pivotal for understanding the projected impacts of climate change on crop yields.
+
+The data encompasses projections of yield changes due to climate change for maize, rice, soybean, and wheat across 91 countries. The dataset is a culmination of 8703 simulations from 202 studies conducted between 1984 and 2020, meticulously compiled through a systematic review of scientific databases, journal articles, and institutional website data, including Scopus, Web of Science, and others. Additionally, geographical coordinates along with current and projected temperature and precipitation levels are integrated, providing a robust framework for quantitative assessments of climate impact on crop production.
+
+This dataset, prepared for the IPCC Working Group II assessment, was initially formed by combining the meta-analysis dataset used by [@citeAggarwal2019], which covered studies from the first five IPCC assessment cycles, and extended with new literature searches for the sixth IPCC assessment cycle (2014–2020), thereby capturing the most relevant variables to evaluate the climate change impacts on crop yields. Efforts were made to ensure data quality and reliability through extensive cross-checks with original sources, recalculations of yields, and adjustments based on new climate scenario data. The resultant dataset stands as an open resource for subsequent analyses, driving forward the data-driven machine learning applications in the agricultural sector.
+
+The dataset underwent rigorous validation processes, including cross-checks with original sources, recalculations of some projected yields, and adjustments based on new climate scenario data. This ensured the accuracy and reliability of the dataset for further analyses. This data was downloaded, cleaned, parsed, analyzed, and visualized using R [@citeR], a statistical programming language, with package support from `tidyverse` [@citetidyverse], a collection of libraries which included the following packages that were utilized:
+
+-   `ggplot2` [@citeggplot]
+-   `dplyr` [@citedplyr]
+
+For additional assistance with data storage, the `arrow` [@citearrow] was used and for report generation, the `knitr` [@citeknitr] package was used.
+
+## Variables
+
+To determine the impact of various climate change factors on rice production in Asia, we compiled a summary table that systematically details each variable, explaining their relevance and effects on regional rice yields.
+
+```{r}
+#| label: tbl-agriculture-info
+#| tbl-cap: First Ten Rows of Agriculture Data
+#| echo: false
+#| warning: false
+#| message: false
+
+# Specify the file path and read the data
+agriculture_data <- read_parquet(here::here("data/analysis_data/agriculture.parquet"))
+
+# Select specific columns and slice the first 10 rows
+agriculture_data |>
+  select(country, local_delta_t, annual_precipitation_change_each_study_mm, co2_ppm, climate_impacts_per_decade_percent) |> 
+  slice(1:10) |>
+  kable(
+    col.names = c("Country", "Temperature Change", "Precipitation Change", "CO2 Concentrations", "Climate Impacts"), 
+    booktabs = TRUE
+  )
+```
+
+@tbl-agriculture-info, encapsulate each variable, articulating both its direct correlation with rice yields and the broader implications for the region’s agricultural output. For the geographical specificity, "Country" delineates the area under study, recognizing the diversity within Asia's vast agricultural landscapes and enabling an assessment that is both nuanced and regionally contextualized. "Temperature Change" denotes the local temperature change, a crucial variable considering rice’s sensitivity to thermal conditions. This metric aids in understanding the stress imposed by local temperature fluctuations on crop development and yield. "Precipitation Change" measures the deviations in annual precipitation from a given baseline, serving as a critical indicator of water resource availability, which is paramount to rice cultivation—a crop significantly dependent on consistent water supply. "Climate Impact" encapsulates the percentage change in rice yields attributed to climate over ten-year increments, providing a measure of the long-term trend in yield variability associated with climatic evolution. "CO2 Concentrations" indicates the levels of atmospheric carbon dioxide, a variable of dual significance: its role in directly influencing plant photosynthetic activity and its broader part in the spectrum of climate change parameters impacting agricultural productivity."Climate Impacts" gauges the decadal percentage change in rice yields as a result of climate influences, indicating the pace at which climate variables are reshaping agricultural productivity over time.
+
+## Data Visualization
+
+@fig-pc, presents a scatter plot that illustrates the relationship between annual precipitation change and its impact on climate, as quantified by changes in crop yields per decade. The data points densely populate around the zero line of climate impact, suggesting that there is a considerable concentration of observations where changes in precipitation have a neutral effect on crop yields. However, there are noticeable trends on either side of the central cluster. On one side, there is a subtle indication that a moderate increase in precipitation could correlate with increased yields, pointing towards the benefit of additional water resources for the crop within a specific threshold. On the contrary, the data significantly deviates below the zero line when precipitation change is negative and substantial, illustrating a steep decline in yields. This sharp downturn reflects the vulnerability of rice production to drought conditions, where a significant deficit in rainfall can severely hamper crop productivity.
+
+```{r}
+#| label: fig-pc
+#| fig-cap: Annual Precipitation change vs Climate Impact
+#| echo: false
+
+agriculture <- read_parquet(here::here("data/analysis_data/agriculture.parquet"))
+
+ggplot(agriculture, aes(x = reorder(annual_precipitation_change_each_study_mm, climate_impacts_per_decade_percent), 
+                             y = climate_impacts_per_decade_percent)) +
+  geom_point() +
+  labs(x = "Annual Precipitation Change (mm)", 
+       y = "Climate Impacts Per Decade (%)", 
+       title = "Relationship between Annual Precipitation Change and Climate Impact per Decade") +
+  theme_minimal()
+```
+
+```{r}
+#| label: fig-tc
+#| fig-cap: Temperature vs Climate Impact
+#| echo: false
+
+agriculture <- read_parquet(here::here("data/analysis_data/agriculture.parquet"))
+
+ggplot(agriculture, aes(x = climate_impacts_per_decade_percent, y = local_delta_t)) +
+  geom_point() +
+  ggtitle("Temperature vs Climate Impact") +
+  labs(x = "Climate Impacts Per Decade (%)",
+       y =   "Local Delta T (°C)") +
+  theme_minimal()
+
+```
+
+@fig-tc, displays the relationship between local temperature changes (Local Delta T) and their corresponding climate impacts per decade on crop yields. The scatter plot indicates a denser congregation of data points at the lower end of temperature changes, suggesting that smaller increases in local temperature do not have a significant impact on yields. However, as the Local Delta T rises above 2°C, there's an observable spread in climate impacts, both positive and negative, though with a tendency towards more negative impacts as temperature deviations increase. This could suggest that moderate temperature increases may be beneficial to a point, possibly due to a lengthened growing season or enhanced photosynthetic efficiency, but beyond a certain threshold, the negative effects such as heat stress and increased evapotranspiration outweigh any benefits, leading to reduced crop productivity.
+
+```{r}
+#| label: fig-cc
+#| fig-cap: CO2 vs Climate Impact
+#| echo: false
+
+agriculture <- read_parquet(here::here("data/analysis_data/agriculture.parquet"))
+
+ggplot(agriculture, aes(x = co2_ppm, y =climate_impacts_per_decade_percent)) +
+  geom_point() +
+  ggtitle("CO2 vs Climate Impact") +
+  labs(x = "Climate Impacts Per Decade (%)",
+       y =   "CO2 (ppm)") +
+  theme_minimal()
+
+```
+
+@fig-cc , presents the correlation between CO2 levels and climate impacts per decade on crop yields. The plot reveals that across a spectrum of CO2 concentration changes, the impact on climate varies, with a cluster of outcomes showing no significant relationship between increased CO2 levels and yield. Despite higher CO2 levels often associated with enhanced photosynthesis and plant growth, the data indicates that these potential benefits do not uniformly translate to increased yields.
+
+# Model {#sec-model}
+
+## Model Set-up
+
+## Model Justification
+
+# Results {#sec-result}
+
+## 
+```{r}
+#| label: tbl-ms
+#| tbl-cap: Model Summary
+#| echo: false
+#| warning: false
+
+
+model <- read_rds(here::here("models/gaussian.rds"))
+
+modelsummary(
+  list(
+    "Gaussian" = model
+  )
+)
+
+```
+
+```{r}
+#| label: fig-mg
+#| fig-cap: Model Graph
+#| echo: false
+
+
+model <- read_rds(here::here("models/gaussian.rds"))
+
+model |>
+  spread_draws(`(Intercept)`, local_delta_t, annual_precipitation_change_each_study_mm, co2_ppm) |>
+  mutate(condition_mean = `(Intercept)` + local_delta_t + annual_precipitation_change_each_study_mm + co2_ppm) |>
+  ggplot(aes(x = condition_mean)) +
+  stat_halfeye() +
+  labs(x = "Conditional Mean", y = "Density") +
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(colour = "grey"),
+        plot.title = element_text(color = "black", size = 14, face = "bold"),
+        axis.title = element_text(color = "black"),
+        axis.text.y = element_text(size = 5),
+        legend.text = element_text(size = 7),
+        plot.caption = element_text(hjust = 0.5) +
+          coord_fixed(ratio = 0.7) )
+
+```
+
+## 
+
+```{r}
+#| label: fig-region
+#| fig-cap: Regional Visualization of Production
+#| echo: false
+
+production_asia <- read_parquet(here::here("data/analysis_data/production.parquet"))
+
+
+world_map <- map_data("world")
+
+
+selected_countries <- c("japan", "thailand", "india", "bangladesh", "cambodia", 
+                        "china", "indonesia", "iran", "korea", "laos", "myanmar", 
+                        "nepal", "pakistan", "philippines", "sri lanka", "vietnam")
+
+asia_map <- world_map |>
+  filter(region %in% selected_countries)
+
+asia_sf <- st_as_sf(map("world", regions = selected_countries, plot = FALSE, fill = TRUE))
+
+median_production_sf <- production_asia |>
+  mutate(country = recode(country, "Korea Rep" = "Korea")) |>
+  inner_join(asia_sf, by = c("country" = "ID"))
+
+ggplot(data = median_production_sf) +
+  geom_sf(aes(fill = climate_impact_median, geometry = geom)) +
+  scale_fill_viridis_c(name = "Median Production", option = "C", direction = -1) +
+  theme_minimal() +
+  labs(title = "Median Production by Country in Asia") +
+  theme(legend.position = "bottom")
+```
+
+# Discussion {#sec-discussion}
+
+\newpage
+
+# References

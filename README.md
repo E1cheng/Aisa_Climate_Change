@@ -10,6 +10,7 @@ This repository contains a paper that investigate the repercussions of climatic 
 -   `paper/` directory featuring the paper's PDF, the R Markdown script, and sourced references.
 -   `scripts/` contains the R script employed for data cleaning, simulation, modelling and testing.
 -   `models/` directory contains the `.rds` files to build the model.
+-   `Replication/` directory that contains R script employed for replicating the plots.
 
 ## LLM Usage
 

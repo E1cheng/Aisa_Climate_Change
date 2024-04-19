@@ -39,6 +39,8 @@ This study replicates and extends the groundbreaking research the 2022 article â
 
 In this exploration, our focus is on building upon this dataset to ascertain the direct causal impact of climatic changes on rice yields in Asia within the 2011-2020 timeframe. This is quantified through the variation in production outcomes directly attributable to climatic aberrations. Our analysis uncovers a notable variance in rice production outcomes directly correlatable to the interplay of climatic changes, including alterations in precipitation patterns, temperature variations, and CO2 concentration levels. Through this lens, we aim to provide a granular understanding of how environmental shifts precipitate significant outcomes in agricultural domains, thereby offering insights crucial for developing resilient food systems in the face of ongoing climatic uncertainties.
 
+The paper is structured to facilitate a comprehensive understanding of the study and its implications. Following @sec-intro, @sec-data presents the data, detailing the data sources, analytical techniques, and the rationale behind the chosen methods. @sec-result discusses the results. @sec-discussion provides an in-depth discussion of these findings.
+
 # Data {#sec-data}
 
 This section is dedicated to elucidating the dataset employed in our inquiry, which critically examines agricultural trends within major Asian countries. We have curated data from an array of randomly selected significant nations in Asia, concentrating on key climatic and production variables. Our dataset encompasses entries that span a decade, from 2011 to 2020, detailing essential factors such as temperature change, precipitation variation, projected yield, and CO2 concentrations. By leveraging these data, our study endeavors to unravel the intricate tapestry of how climatic factors interweave with agricultural productivity across diverse Asian agronomic landscapes.
@@ -152,14 +154,58 @@ ggplot(agriculture, aes(x = co2_ppm, y =climate_impacts_per_decade_percent)) +
 
 # Model {#sec-model}
 
-## Model Set-up
+Gaussian regression is a regression model where the dependent variable is assumed to have a Normal distribution. In Gaussian regression, the errors are assumed to be normally distributed, and models the mean of the distribution as a linear function of the predictors. The Gaussian regression is useful for continuous response variable that displays normality.
 
-## Model Justification
+In our context, we will fit our data with the Gaussian regression to discover relation between crop yield and various independent variables such as annual precipitation and temperature.
+
+### Model Setup
+
+Let $y$ be the dependent variable `climate_impacts_per_decade_percent`, which is a percentage of crop yields.
+
+
+$$
+\begin{aligned}
+
+y_i &\sim \mathcal{N}(\mu_i, \sigma^2) \\ 
+\mu_i &= \beta_0 + \beta_1 \times \text{local temperature change}_i + \beta_2 \times \text{annual precipitation change}_i + \beta_3 \times \text{co2}_i \\
+\beta_j &\sim \mathcal{N}(0, 2.5^2) \space \text{for j = 1, 2, 3} \\
+\sigma &\sim \text{Exponential}(1)
+
+\end{aligned}
+$$
+
+- $\beta_0$ is the intercept,
+- $\beta_1$ is the coefficient for the predictor `local_delta_t`,
+- $\beta_2$ is the coefficient for the predictor `annual_precipitation_change_each_study_mm`,
+- $\beta_3$ is the coefficient for the predictor `co2_ppm`.
+
+We will run the model in R [@citeR] using the `rstanarm` package of [@citerstanarm].
+
+
+### Model Justification
+The purpose of this model is to discover an understanding of the factors affecting crop yields as influenced by climate, with an expectation of linear effects and normally distributed outcomes.The use of Gaussian regression is justified from previous visualizations, as the changes in the predictor variables are proportional to the expected value of the outcome. Moreover, the Gaussian family is intuitive for modeling continuous outcomes like percentages, which is the outcome we are attempted to learn of.
 
 # Results {#sec-result}
 
 ## Model Visualization
 
+```{r}
+#| label: tbl-ms
+#| tbl-cap: Summary of Gaussian Model
+#| echo: false
+#| warning: false
+
+
+model <- read_rds(here::here("models/gaussian.rds"))
+
+modelsummary(
+  list(
+    "Gaussian" = model
+  )
+)
+
+```
+@tbl-ms, we see that the intercept is significantly negative, which could be indicative of an overall negative trend in the absence of other factors. The coefficients for local temperature change (local_delta_t) and CO2 concentration (co2_ppm) are positive, suggesting that, in isolation, increases in temperature and CO2 might be associated with increases in rice yield, possibly due to the fertilization effect of CO2 and the extended growing seasons from warmer temperatures. However, the negative coefficient for annual precipitation change (annual_precipitation_change_each_study_mm) highlights the critical role water availability plays in crop yields, where less rainfall is detrimental. The model's explanatory power, as shown by the R-squared value, suggests that while the model captures some of the variability in the data, much remains unexplained, which is not uncommon in complex systems like agriculture where numerous unmeasured factors could influence the outcome.
 
 ```{r}
 #| label: fig-mg
@@ -188,27 +234,9 @@ model |>
 
 ```
 
-```{r}
-#| label: tbl-ms
-#| tbl-cap: Summary of Gaussian Model
-#| echo: false
-#| warning: false
-
-
-model <- read_rds(here::here("models/gaussian.rds"))
-
-modelsummary(
-  list(
-    "Gaussian" = model
-  )
-)
-
-```
-@fig-mg, provide us with a profound insight into the dynamics of climate impact on rice production. The "Distribution of Gaussian Model Predictions" visualizes the spread of the model's conditional means, which represent the predicted climate impacts on rice production. This density plot shows a bell-shaped curve centered around a negative value, indicating that, on average, there's a tendency for a negative climate impact on rice yields within the dataset's scope.
+Turning to @fig-mg, provide us with a profound insight into the dynamics of climate impact on rice production. The "Distribution of Gaussian Model Predictions" visualizes the spread of the model's conditional means, which represent the predicted climate impacts on rice production. This density plot shows a bell-shaped curve centered around a negative value, indicating that, on average, there's a tendency for a negative climate impact on rice yields within the dataset's scope.
 
 The trend analysis, as observed in the distribution, suggests that while there is a variation in the model predictions with some positive impacts, the majority of the data points skew towards negative impacts. This implies that the climatic variables included in the model are, more often than not, associated with a decrease in rice production per decade. The spread of the distribution also hints at the variability of the impacts, with some regions potentially experiencing more severe effects of climate change than others.
-
-Turning to @tbl-ms, we see that the intercept is significantly negative, which could be indicative of an overall negative trend in the absence of other factors. The coefficients for local temperature change (local_delta_t) and CO2 concentration (co2_ppm) are positive, suggesting that, in isolation, increases in temperature and CO2 might be associated with increases in rice yield, possibly due to the fertilization effect of CO2 and the extended growing seasons from warmer temperatures. However, the negative coefficient for annual precipitation change (annual_precipitation_change_each_study_mm) highlights the critical role water availability plays in crop yields, where less rainfall is detrimental. The model's explanatory power, as shown by the R-squared value, suggests that while the model captures some of the variability in the data, much remains unexplained, which is not uncommon in complex systems like agriculture where numerous unmeasured factors could influence the outcome.
 
 These insights underscore the complex interplay between various climatic factors and their combined effect on agricultural productivity. While the model captures the general trend, it also prompts a deeper investigation into the nuanced and multifaceted nature of climate impacts on agriculture, beyond what is represented by the data at hand.
 

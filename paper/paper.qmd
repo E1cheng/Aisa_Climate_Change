@@ -3,7 +3,7 @@ title: "Analyzing the Effects of Climatic Change on Rice Production Yields in As
 author: 
   - Yang Cheng 
   
-thanks: "Code and data are available at: https://github.com/E1cheng/Climate_Change_Agricultural"
+thanks: "Code and data are available at: https://github.com/E1cheng/Aisa_Climate_Change.A replication of various aspects in this paper are available at: https://www.socialsciencereproduction.org/reproductions/1807/index?step=0"
 date: today
 date-format: long
 abstract: "In this study, we investigate the repercussions of climatic alterations on rice production yields across Asia's principal agricultural regions over the decade spanning 2011 to 2020. The modeling results indicate the intricate relationship between climatic variables and rice yield fluctuations. The findings underscore significant regional disparities in rice production outcomes, attributable to the differential impacts of climate change. This research contributes to the broader understanding of the challenges and opportunities facing rice production in the context of climatic variability, offering crucial insights for the development of adaptive strategies to ensure food security in the face of environmental change."
@@ -41,6 +41,8 @@ In this exploration, our focus is on building upon this dataset to ascertain the
 
 # Data {#sec-data}
 
+This section is dedicated to elucidating the dataset employed in our inquiry, which critically examines agricultural trends within major Asian countries. We have curated data from an array of randomly selected significant nations in Asia, concentrating on key climatic and production variables. Our dataset encompasses entries that span a decade, from 2011 to 2020, detailing essential factors such as temperature change, precipitation variation, projected yield, and CO2 concentrations. By leveraging these data, our study endeavors to unravel the intricate tapestry of how climatic factors interweave with agricultural productivity across diverse Asian agronomic landscapes.
+
 ## Source and Methodology
 
 The dataset used in this study originates from the paper by [@citeHasegawa2022], titled "A global dataset for the projected impacts of climate change on four major crops". This comprehensive dataset is pivotal for understanding the projected impacts of climate change on crop yields.
@@ -53,7 +55,7 @@ The dataset underwent rigorous validation processes, including cross-checks with
 
 -   `ggplot2` [@citeggplot]
 -   `dplyr` [@citedplyr]
-
+-   `kableExtra` [@citekableExtra]
 For additional assistance with data storage, the `arrow` [@citearrow] was used and for report generation, the `knitr` [@citeknitr] package was used.
 
 ## Variables
@@ -80,7 +82,17 @@ agriculture_data |>
   )
 ```
 
-@tbl-agriculture-info, encapsulate each variable, articulating both its direct correlation with rice yields and the broader implications for the region’s agricultural output. For the geographical specificity, "Country" delineates the area under study, recognizing the diversity within Asia's vast agricultural landscapes and enabling an assessment that is both nuanced and regionally contextualized. "Temperature Change" denotes the local temperature change, a crucial variable considering rice’s sensitivity to thermal conditions. This metric aids in understanding the stress imposed by local temperature fluctuations on crop development and yield. "Precipitation Change" measures the deviations in annual precipitation from a given baseline, serving as a critical indicator of water resource availability, which is paramount to rice cultivation—a crop significantly dependent on consistent water supply. "Climate Impact" encapsulates the percentage change in rice yields attributed to climate over ten-year increments, providing a measure of the long-term trend in yield variability associated with climatic evolution. "CO2 Concentrations" indicates the levels of atmospheric carbon dioxide, a variable of dual significance: its role in directly influencing plant photosynthetic activity and its broader part in the spectrum of climate change parameters impacting agricultural productivity."Climate Impacts" gauges the decadal percentage change in rice yields as a result of climate influences, indicating the pace at which climate variables are reshaping agricultural productivity over time.
+@tbl-agriculture-info, encapsulate each variable, articulating both its direct correlation with rice yields and the broader implications for the region’s agricultural output. 
+
+For the geographical specificity, "Country" delineates the area under study, recognizing the diversity within Asia's vast agricultural landscapes and enabling an assessment that is both nuanced and regionally contextualized. 
+
+"Temperature Change" denotes the local temperature change, a crucial variable considering rice’s sensitivity to thermal conditions. This metric aids in understanding the stress imposed by local temperature fluctuations on crop development and yield. 
+
+"Precipitation Change" measures the deviations in annual precipitation from a given baseline, serving as a critical indicator of water resource availability, which is paramount to rice cultivation—a crop significantly dependent on consistent water supply. 
+
+"CO2 Concentrations" indicates the levels of atmospheric carbon dioxide, a variable of dual significance: its role in directly influencing plant photosynthetic activity and its broader part in the spectrum of climate change parameters impacting agricultural productivity.
+
+"Climate Impacts" gauges the decadal percentage change in rice yields as a result of climate influences, indicating the pace at which climate variables are reshaping agricultural productivity over time.
 
 ## Data Visualization
 
@@ -146,23 +158,8 @@ ggplot(agriculture, aes(x = co2_ppm, y =climate_impacts_per_decade_percent)) +
 
 # Results {#sec-result}
 
-## 
-```{r}
-#| label: tbl-ms
-#| tbl-cap: Model Summary
-#| echo: false
-#| warning: false
+## Model Visualization
 
-
-model <- read_rds(here::here("models/gaussian.rds"))
-
-modelsummary(
-  list(
-    "Gaussian" = model
-  )
-)
-
-```
 
 ```{r}
 #| label: fig-mg
@@ -177,7 +174,9 @@ model |>
   mutate(condition_mean = `(Intercept)` + local_delta_t + annual_precipitation_change_each_study_mm + co2_ppm) |>
   ggplot(aes(x = condition_mean)) +
   stat_halfeye() +
-  labs(x = "Conditional Mean", y = "Density") +
+  labs(x = "Conditional Mean",
+       y = "Density", 
+       title = "Distribution of Gaussian Model Predictions")+
   theme(panel.background = element_rect(fill = "white"),
         panel.grid.major = element_line(colour = "grey"),
         plot.title = element_text(color = "black", size = 14, face = "bold"),
@@ -189,7 +188,31 @@ model |>
 
 ```
 
-## 
+```{r}
+#| label: tbl-ms
+#| tbl-cap: Summary of Gaussian Model
+#| echo: false
+#| warning: false
+
+
+model <- read_rds(here::here("models/gaussian.rds"))
+
+modelsummary(
+  list(
+    "Gaussian" = model
+  )
+)
+
+```
+@fig-mg, provide us with a profound insight into the dynamics of climate impact on rice production. The "Distribution of Gaussian Model Predictions" visualizes the spread of the model's conditional means, which represent the predicted climate impacts on rice production. This density plot shows a bell-shaped curve centered around a negative value, indicating that, on average, there's a tendency for a negative climate impact on rice yields within the dataset's scope.
+
+The trend analysis, as observed in the distribution, suggests that while there is a variation in the model predictions with some positive impacts, the majority of the data points skew towards negative impacts. This implies that the climatic variables included in the model are, more often than not, associated with a decrease in rice production per decade. The spread of the distribution also hints at the variability of the impacts, with some regions potentially experiencing more severe effects of climate change than others.
+
+Turning to @tbl-ms, we see that the intercept is significantly negative, which could be indicative of an overall negative trend in the absence of other factors. The coefficients for local temperature change (local_delta_t) and CO2 concentration (co2_ppm) are positive, suggesting that, in isolation, increases in temperature and CO2 might be associated with increases in rice yield, possibly due to the fertilization effect of CO2 and the extended growing seasons from warmer temperatures. However, the negative coefficient for annual precipitation change (annual_precipitation_change_each_study_mm) highlights the critical role water availability plays in crop yields, where less rainfall is detrimental. The model's explanatory power, as shown by the R-squared value, suggests that while the model captures some of the variability in the data, much remains unexplained, which is not uncommon in complex systems like agriculture where numerous unmeasured factors could influence the outcome.
+
+These insights underscore the complex interplay between various climatic factors and their combined effect on agricultural productivity. While the model captures the general trend, it also prompts a deeper investigation into the nuanced and multifaceted nature of climate impacts on agriculture, beyond what is represented by the data at hand.
+
+## Change in Rice Yield by Region
 
 ```{r}
 #| label: fig-region
@@ -222,8 +245,36 @@ ggplot(data = median_production_sf) +
   labs(title = "Median Production by Country in Asia") +
   theme(legend.position = "bottom")
 ```
+@fig-region, serves as a visual representation in our results section, showcasing the median rice production across different countries in Asia. The map delineates regions within Asia and uses a color gradient to signify the median production levels, with distinct hues corresponding to varying production volumes. The color scale reflects a range that includes both negative and positive production values, implying that certain regions may be experiencing declines in rice production.
+
+The map reveals a heterogeneous pattern of median production values across Asia. Some areas display positive median production values, suggesting resilience or even growth in rice production, whereas other regions, particularly those represented in lighter shades, may be experiencing reductions. This geographic differentiation in production trends can be attributed to the similar climatic conditions and weather patterns shared by countries within the same region. For example, nations that share monsoonal patterns or similar temperature and precipitation regimes are likely to exhibit comparable agricultural outcomes due to these shared environmental influences.
 
 # Discussion {#sec-discussion}
+
+##  Findings
+In replicating the work of @citeHasegawa2022, our research confirms the finding: climate change exerts an influence on rice production yields in Asia's principal agricultural regions. While the impact of CO2, as illustrated by @fig-cc, appears relatively minor, this could be attributed to the regional variations in CO2 levels not being markedly pronounced or to the adaptive physiological responses of plants to inorganic substances. Both @fig-pc and @fig-tc underscore the correlation between temperature, precipitation, and production yield. The data visualization in @fig-mg further substantiates these findings, showcasing the density distribution of predicted climate impacts based on these variables.
+
+##  Agricultural and Social Influence
+In the agricultural domain, the implications of our study serve as a barometer for farming practices across diverse regions. Take, for instance, East Asian nations like China and Korea, where a marked increase in temperature has been observed in recent years. Farmers in these areas may consider reducing insulation measures or augmenting cooling systems to adapt to the warming climate. On the other hand, countries in South and Southeast Asia, such as India and the Philippines, have experienced a significant uptick in annual precipitation. While this could potentially enhance rice yields, the threat of flooding necessitates a strategic reduction in irrigation to mitigate the risk of crop loss due to water-related disasters.
+
+Extending beyond the immediate agricultural impact, these climatic trends have broader socio-economic ramifications. For instance, alterations in crop yield can influence market prices and food security, affecting not just the agricultural sector but the entire economic fabric of these regions. Consequently, there is a cascading effect on the livelihoods of communities, where farmers may need to diversify crops or invest in new agricultural technologies.
+
+Moreover, the findings underscore the urgency for infrastructural resilience. Governments and policymakers must invest in robust water management systems to harness the benefits of increased rainfall, while also bolstering defenses against extreme weather events. This dual approach can help safeguard the agricultural output, ensuring stability in both supply chains and local economies.
+
+Lastly, the study highlights the critical need for climate education at the grassroots level. Providing farmers with the knowledge and resources to interpret and respond to climate data can empower them to make informed decisions, ultimately fostering a climate-resilient agricultural framework across Asia.
+
+##  Weaknesses and Future Research Directions
+Our study, while rigorous in its approach, is not without its limitations. The analysis predominantly hinges on climatic variables, potentially overlooking socio-economic factors, regional agricultural policies, and micro-environmental conditions that can also play significant roles in influencing rice yields. The Gaussian model, although robust, assumes normality and may not capture the full spectrum of uncertainties or non-linear relationships inherent in the data. Additionally, the cross-sectional nature of the study limits our ability to draw causal inferences or predict long-term trends.
+
+Future research should aim to integrate a more comprehensive set of variables, including socio-economic factors, agricultural practices, and policy impacts, to construct a holistic view of the influences on rice production. Longitudinal studies could offer insights into the enduring effects of climate change and the effectiveness of adaptation strategies over time.
+
+Embracing cutting-edge technologies such as remote sensing and machine learning could yield high-resolution data and more sophisticated predictive models. Such advancements would enable the identification of early-warning signals for adverse climatic events and the development of precision agriculture practices.
+
+Moreover, there's a pronounced need for interdisciplinary collaboration, combining climate science with agronomy, economics, and social sciences. This multidisciplinary approach would contribute to more resilient and sustainable agricultural practices, tailored to the unique challenges of different regions.
+
+In the realm of policy-making, our findings could guide the design of targeted interventions and the allocation of resources to the regions most in need. By understanding the specific vulnerabilities and capacities of each area, policies can be crafted to support adaptive measures that not only mitigate the impacts of climate change but also capitalize on potential benefits.
+
+Ultimately, to address the global challenge posed by climate change to agriculture, our approach to research must be as dynamic and multifaceted as the issue itself. This calls for continuous monitoring, innovation, and adaptation in our research methods and models.
 
 \newpage
 
